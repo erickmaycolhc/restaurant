@@ -125,13 +125,37 @@ const restaurants: Restaurant[] = [
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const api = {
-  list: async (): Promise<Restaurant[]> => {
-    await sleep(750);
+    list: async (): Promise<Restaurant[]> => {
+  //Obtenemos la información de Google Sheets en formato texto y la dividimos por líneas, nos saltamos la primera porque es el encabezado
+  const [, ...data] = await fetch('https://docs.google.com/spreadsheets/d/e/2PACX-1vQboQl-gKTSX1cgBjYDOx6tsaFPME-bgCr4zLHrzdRK7VjdI6lr2rhKkFVIZvQjyXpDNrlY2pXWIkhT/pub?output=csv',{cache:'no-store'})
+  .then(res=> res.text())
+  .then(text => text.split('\n'))
+  //,{cache:'no-store'} es para entrar a la base de datos y extraer los datos nuevos cuando hago una petición
+  //  { next: { revalidate: 100 } }) revalidar dato cada tiempo que le des ejm(20) o (100) etc.
 
-    return restaurants;
+
+  //Convertimos cada línea en un objeto Restaurant, asegúrate de que los campos no poseen ','
+  const restaurants: Restaurant[] = data.map((row)=>{
+    const [id, name, description, address, score, ratings, image] = row.split(',')
+    return{
+      id,
+      name,
+      description,
+      address,
+      score: Number(score),
+      ratings: Number(ratings),
+      image
+    }
+  })
+  console.log(restaurants);
+
+  //lo retornamos
+  return restaurants
+
   },
+
   fetch: async (id: Restaurant["id"]): Promise<Restaurant> => {
-    await sleep(750);
+    await sleep(0); //sleep para controlar el temporizador de carga
 
     const restaurant = restaurants.find((restaurant) => restaurant.id === id);
 
@@ -141,6 +165,19 @@ const api = {
 
     return restaurant;
   },
+
+    search: async (query: string): Promise<Restaurant[]> => {
+    // Obtenemos los restaurantes
+    const results = await api.list().then((restaurants) =>
+      // Los filtramos por nombre
+      restaurants.filter((restaurant) =>
+       restaurant.name.toLowerCase().includes(query.toLowerCase()),
+      ),
+    );
+    // Los retornamos
+    return results;
+  },
+
 };
 
 export default api;
