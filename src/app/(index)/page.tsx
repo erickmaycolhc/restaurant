@@ -1,11 +1,13 @@
 import api from "@/api";
 import RestaurantCard from "@/components/RestaurantCard";
-import Link from "next/link";
 import { redirect } from "next/navigation";
 
-export default async function  Home({searchParams}:{searchParams:{q?: string | any}}){
+export default async function  Home({searchParams}:{searchParams:{q?: string | undefined}}){
 
-  const restaurants = await api.search(searchParams.q);
+  const query = searchParams.q ?? '';
+    // Llamar a la API para obtener la lista de restaurantes
+  const restaurants = await api.search(query);
+  // const restaurants = await api.search(searchParams.q);
 
   async function searchAction(formData: FormData) {
     'use server'
